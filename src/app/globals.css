@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent: #8A9A52;
+  --accent-soft: #E8ECCF;
+  --accent-deep: #57632E;
+  --on-accent: #FFFFFF;
+
+  --bg-base: #F5F4EA;
+  --bg-surface: #FCFBF4;
+  --bg-sunken: #ECEBDC;
+
+  --fg-primary: #2A331B;
+  --fg-secondary: #5A6147;
+  --fg-tertiary: #8B8F75;
+
+  --border-soft: #E6E6D4;
+  --border-default: #D6D8C3;
+  --border-ink: #2A331B;
+
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-ui: 'Space Mono', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-ui);
+  color: var(--fg-primary);
+  background: var(--bg-base);
+  font-weight: 400;
+}
+
+/* All UI text stays at 400 — hierarchy via size/color/spacing */
+*, *::before, *::after {
+  font-weight: 400;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ── Screen animations ── */
+@media (prefers-reduced-motion: no-preference) {
+  .anim-in {
+    animation: screenIn 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .anim-pop {
+    animation: pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .blob-float {
+    animation: blobFloat 16s ease-in-out infinite;
+  }
+}
+
+@keyframes screenIn {
+  from { transform: translateY(12px); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes pop {
+  0%   { transform: scale(0.85); }
+  55%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes blobFloat {
+  0%   { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+  50%  { transform: translate(14px, -18px) rotate(10deg) scale(1.06); }
+  100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+}
+
+/* ── Slider ── */
+input[type=range].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--bg-sunken);
+  outline: none;
+}
+input[type=range].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 4px solid white;
+  box-shadow: 0 6px 20px rgba(40,48,24,0.08);
+  cursor: pointer;
+}
+input[type=range].slider::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 4px solid white;
+  box-shadow: 0 6px 20px rgba(40,48,24,0.08);
+  cursor: pointer;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+
+/* ── Focus styles ── */
+.field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
