@@ -20,45 +20,18 @@ async function generateFromClaude(
   minutes: number,
   energy: string
 ): Promise<Suggestion[]> {
-  const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("No API key");
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch("/api/suggest", {
     method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      messages: [
-        {
-          role: "user",
-          content: `You are a values-based action coach. The user wants to live the value of "${value}". They have ${minutes} minutes available and ${energy} energy.
-
-Suggest exactly 3 concrete, warm, immediately doable actions. Return ONLY a valid JSON array, no explanation or markdown:
-[{"text":"...","minutes":N,"energy":"low|medium|high"},...]
-
-Rules:
-- Each action takes at most ${minutes} minutes (use realistic durations)
-- Energy level is "${energy}" or lower
-- Text is specific and encouraging, under 65 characters`,
-        },
-      ],
-    }),
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ value, minutes, energy }),
   });
 
   if (!response.ok) throw new Error(`API ${response.status}`);
 
   const data = await response.json();
-  const raw: string = data.content?.[0]?.text ?? "";
-  const match = raw.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error("No JSON in response");
-  const parsed: Suggestion[] = JSON.parse(match[0]);
-  if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("Invalid array");
-  return parsed.slice(0, 3);
+  if (!Array.isArray(data.suggestions) || data.suggestions.length === 0)
+    throw new Error("Invalid response");
+  return data.suggestions;
 }
 
 export default function SuggestPage() {
@@ -86,7 +59,9 @@ export default function SuggestPage() {
     setPhase("loading");
     try {
       setResults(await generateFromClaude(value, minutes, energy));
-    } catch {
+      console.log("[suggest] Claude API succeeded");
+    } catch (e) {
+      console.warn("[suggest] Claude API failed, using fallback:", e);
       setResults(generate(value, minutes, energy));
     }
     setPhase("results");
