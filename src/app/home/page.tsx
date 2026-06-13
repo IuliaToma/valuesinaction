@@ -53,25 +53,6 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Guest banner */}
-        <div
-          className="flex items-start gap-[11px] p-[12px_14px] rounded-[14px] border border-[var(--border-soft)] mb-6"
-          style={{ background: "var(--accent-soft)" }}
-        >
-          <Icon name="leaf" size={17} style={{ color: "var(--accent-deep)", flexShrink: 0, marginTop: 1 }} />
-          <p className="text-xs flex-1 leading-[1.5]" style={{ color: "var(--fg-secondary)" }}>
-            You&apos;re exploring as a guest — try everything freely, no commitment.{" "}
-            <button
-              onClick={() => {}}
-              className="underline underline-offset-2 p-0 text-inherit text-xs inline"
-              style={{ color: "var(--accent-deep)" }}
-            >
-              Create a free account
-            </button>{" "}
-            whenever you&apos;d like to save your progress.
-          </p>
-        </div>
-
         {/* Values strip */}
         <div
           className="flex gap-2 overflow-x-auto pb-[6px] mb-[26px]"

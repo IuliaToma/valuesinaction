@@ -15,7 +15,7 @@ import { Icon } from "@/components/icons";
 function PlanForm() {
   const router = useRouter();
   const sp = useSearchParams();
-  const { values } = useApp();
+  const { values, commitActivity } = useApp();
 
   const [value, setValue] = useState(sp.get("value") || values[0] || "");
   const [name, setName] = useState(sp.get("name") || "");
@@ -132,18 +132,11 @@ function PlanForm() {
         <Button
           disabled={!valid}
           onClick={() => {
-            const params = new URLSearchParams({
-              value,
-              name: name.trim(),
-              date,
-              time,
-              duration: String(duration),
-              difficulty,
-            });
-            router.push(`/schedule?${params.toString()}`);
+            commitActivity({ value, name: name.trim(), date, time, duration, difficulty, reminder: "none", calendar: null });
+            router.push("/home");
           }}
         >
-          Add reminder & schedule <Icon name="arrowR" size={19} />
+          <Icon name="check" size={19} /> Commit to this action
         </Button>
       </BottomBar>
     </div>
