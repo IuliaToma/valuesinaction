@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/app-provider";
 import { generate, valueIcon } from "@/lib/data";
@@ -11,8 +11,55 @@ import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
 import { IconBadge } from "@/components/icon-badge";
 import { Icon } from "@/components/icons";
+import type { Suggestion } from "@/lib/types";
 
-type Phase = "setup" | "results";
+type Phase = "setup" | "loading" | "results";
+
+async function generateFromClaude(
+  value: string,
+  minutes: number,
+  energy: string
+): Promise<Suggestion[]> {
+  const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("No API key");
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 512,
+      messages: [
+        {
+          role: "user",
+          content: `You are a values-based action coach. The user wants to live the value of "${value}". They have ${minutes} minutes available and ${energy} energy.
+
+Suggest exactly 3 concrete, warm, immediately doable actions. Return ONLY a valid JSON array, no explanation or markdown:
+[{"text":"...","minutes":N,"energy":"low|medium|high"},...]
+
+Rules:
+- Each action takes at most ${minutes} minutes (use realistic durations)
+- Energy level is "${energy}" or lower
+- Text is specific and encouraging, under 65 characters`,
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) throw new Error(`API ${response.status}`);
+
+  const data = await response.json();
+  const raw: string = data.content?.[0]?.text ?? "";
+  const match = raw.match(/\[[\s\S]*\]/);
+  if (!match) throw new Error("No JSON in response");
+  const parsed: Suggestion[] = JSON.parse(match[0]);
+  if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("Invalid array");
+  return parsed.slice(0, 3);
+}
 
 export default function SuggestPage() {
   const router = useRouter();
@@ -21,11 +68,7 @@ export default function SuggestPage() {
   const [value, setValue] = useState(values[0] || "Love");
   const [minutes, setMinutes] = useState(10);
   const [energy, setEnergy] = useState<"low" | "medium" | "high">("low");
-
-  const results = useMemo(
-    () => (phase === "results" ? generate(value, minutes, energy) : []),
-    [phase, value, minutes, energy]
-  );
+  const [results, setResults] = useState<Suggestion[]>([]);
 
   const TIME_OPTS: [string, string][] = [
     ["5", "5 min"],
@@ -38,6 +81,16 @@ export default function SuggestPage() {
     ["medium", "Medium"],
     ["high", "High"],
   ];
+
+  async function handleGenerate() {
+    setPhase("loading");
+    try {
+      setResults(await generateFromClaude(value, minutes, energy));
+    } catch {
+      setResults(generate(value, minutes, energy));
+    }
+    setPhase("results");
+  }
 
   if (phase === "setup") {
     return (
@@ -95,9 +148,26 @@ export default function SuggestPage() {
             onChange={setEnergy}
           />
 
-          <Button onClick={() => setPhase("results")}>
+          <Button onClick={handleGenerate}>
             <Icon name="spark" size={18} /> Suggest an action
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "loading") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center" style={{ background: "var(--bg-base)" }}>
+        <StatusBar />
+        <div className="flex flex-col items-center gap-4 anim-in">
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center animate-pulse"
+            style={{ background: "var(--accent-soft)" }}
+          >
+            <Icon name="spark" size={24} style={{ color: "var(--accent-deep)" }} />
+          </div>
+          <p className="text-sm" style={{ color: "var(--fg-secondary)" }}>Finding the right actions…</p>
         </div>
       </div>
     );
@@ -149,7 +219,7 @@ export default function SuggestPage() {
           ))}
         </div>
 
-        <Button className="mt-5" onClick={() => setPhase("setup")}>
+        <Button className="mt-5" onClick={handleGenerate}>
           <Icon name="spark" size={17} /> Suggest different ones
         </Button>
         <Button
